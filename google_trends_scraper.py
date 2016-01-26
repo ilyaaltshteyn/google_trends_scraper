@@ -14,18 +14,21 @@ proxies_list = pd.read_csv(current_path + 'google_proxies.csv')
 
 def change_proxy(proxy_list):
     """ Creates and returns a webdriver instance with proxy settings adjusted. """
+
     address, port = np.array(proxies_list.ix[random.sample(proxies_list.index, 1)])[0]
     options = webdriver.ChromeOptions()
     options.add_argument('--proxy-server=%s:%s' % (str(address), str(port)))
     browser = webdriver.Chrome(executable_path = '/Users/ilya/Projects/WebDriver/chromedriver', 
-                               chrome_options=options)
+                               chrome_options = options)
     return browser
 
 
 def screen_cap(browser, path, keyword= 'aapl'):
     """ Takes a screenshot of the google trends chart for a given keyword. 
         Returns the location of the image. """
-    url = 'http://www.google.com/trends/fetchComponent?hl=en-US&q= ' + str(keyword) + '&cid=TIMESERIES_GRAPH_0&export=5&w=500&h=300'
+
+    url = 'http://www.google.com/trends/fetchComponent?hl=en-US&q= ' + \
+        str(keyword) + '&cid=TIMESERIES_GRAPH_0&export=5&w=500&h=300'
     browser.get(url)
     time.sleep(3)
     browser.save_screenshot(path + keyword + '.png')
@@ -35,10 +38,10 @@ def screen_cap(browser, path, keyword= 'aapl'):
 
 def read_image(path, name):
     """ Reads an image, spits out the data for the red line. """
-    image = Image.open(path + name + '.png').convert("RGB")
+
+    image = Image.open(path + name + '.png').convert('RGB')
     image = image.transpose(Image.FLIP_TOP_BOTTOM)
     reds = set(list(image.getdata()))
-    print reds
     x_size = image.size[0]
     y_size = image.size[1]
     data = {'xs': [], 'ys': [] }
@@ -49,7 +52,8 @@ def read_image(path, name):
             r = pixel[0]
             g = pixel[1]
             b = pixel[2]
-            if r < 90 and g > 100 and g < 160 and b > 210 and y > 370 and y < 577 and x < 500:
+            if r < 90 and g > 100 and g < 160 and b > 210 and y > 370 and \
+                y < 577 and x < 500:
                 all_ys.append(y - 400)
         if len(all_ys) > 0:
             data['xs'].append(x)
