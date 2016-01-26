@@ -1,22 +1,35 @@
+# This script scrapes google trends data from a screenshot that it takes of a
+# google trends chart for a given
+
 from PIL import Image
-import requests
-
-current_path = '/Users/ilya/Projects/stox/google_trends_scraper/'
-
-import sys
 import time
 import numpy as np
-
+import pandas as pd
+import random
 from selenium import webdriver
 
-def screen_cap(path, keyword= 'aapl'):
+# Get list of proxy servers, pulled from http://www.google-proxy.net/
+current_path = '/Users/ilya/Projects/stox/google_trends_scraper/'
+proxies_list = pd.read_csv(current_path + 'google_proxies.csv')
+
+def change_proxy(proxy_list):
+    """ Creates and returns a webdriver instance with proxy settings adjusted. """
+    address, port = np.array(proxies_list.ix[random.sample(proxies_list.index, 1)])[0]
+    options = webdriver.ChromeOptions()
+    options.add_argument('--proxy-server=%s:%s' % (str(address), str(port)))
+    browser = webdriver.Chrome(executable_path = '/Users/ilya/Projects/WebDriver/chromedriver', 
+                               chrome_options=options)
+    return browser
+
+
+def screen_cap(browser, path, keyword= 'aapl'):
     """ Takes a screenshot of the google trends chart for a given keyword. 
         Returns the location of the image. """
-    url = 'http://www.google.com/trends/fetchComponent?hl=en-US&q=aapl&cid=TIMESERIES_GRAPH_0&export=5&w=500&h=300'
-    driver = webdriver.Chrome('/Users/ilya/Projects/WebDriver/chromedriver')
-    driver.get(url)
-    driver.save_screenshot(path + keyword + '.png')
-    driver.quit()
+    url = 'http://www.google.com/trends/fetchComponent?hl=en-US&q= ' + str(keyword) + '&cid=TIMESERIES_GRAPH_0&export=5&w=500&h=300'
+    browser.get(url)
+    time.sleep(3)
+    browser.save_screenshot(path + keyword + '.png')
+    browser.quit()
 
     return (path, keyword)
 
@@ -45,10 +58,10 @@ def read_image(path, name):
     return (data, path, name)
 
 def write_data(data, path, name):
-    import pandas as pd
+    
     df = pd.DataFrame(data)
     df.to_csv(path + name + '.csv', index = False)
 
-p, n = screen_cap(current_path)
+p, n = screen_cap(change_proxy(proxies_list), current_path)
 d, p, n = read_image(p, n)
 write_data(d, p, n)
